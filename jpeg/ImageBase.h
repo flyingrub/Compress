@@ -58,6 +58,10 @@ struct Color {
 		return r == other.r && g == other.g && b == other.b;
 	}
 
+	inline Color operator*(float n) {
+		return {r*n, g*n, b*n};
+	}
+
 	inline Color operator/(float n) {
 		return {r/n, g/n, b/n};
 	}
@@ -103,7 +107,57 @@ struct Color {
 
 struct pixel_block {
 	int start_index;
-	variant<Color, unsigned char> data[8][8];
+	bool color;
+	Color data[8][8];
+	double dataGrey[8][8];
+
+	pixel_block(bool color) {
+		this->color = color;
+	}
+
+	pixel_block dct() {
+		pixel_block res(color);
+		res.start_index = start_index;
+		double Ci,Cj;
+		for (int i = 0; i < 8; ++i) {
+			for (int j = 0; j < 8; ++j) {
+				auto color = Color();
+				Ci = i == 0 ? 1./sqrt(2) : 1.;
+				Cj = j == 0 ? 1./sqrt(2) : 1.;
+				for (int x = 0; x < 8; x++) {
+					for (int y = 0; y < 8; y++) {
+						color = color + data[x][y] * cos(((2*x+1) * i * M_PI)/16)
+												   * cos(((2*y+1) * j * M_PI)/16);
+					}
+				}
+				res.data[i][j] = color * Ci * Cj * 2.0 / 8.0;
+			}
+		}
+		return res;
+	}
+
+	pixel_block idct() {
+		pixel_block res(color);
+		res.start_index = start_index;
+		double Ci,Cj;
+		for (int x = 0; x < 8; ++x) {
+			for (int y = 0; y < 8; ++y) {
+				auto color = Color();
+				for (int i = 0; i < 8; i++) {
+					for (int j = 0; j < 8; j++) {
+						Ci = i == 0 ? 1./sqrt(2) : 1.;
+						Cj = j == 0 ? 1./sqrt(2) : 1.;
+						color = color + data[i][j] * cos(((2*x+1) * i * M_PI)/16)
+												   * cos(((2*y+1) * j * M_PI)/16)
+												   * Ci * Cj;
+					}
+				}
+				res.data[x][y] = color * 2.0/8.0;
+			}
+		}
+		return res;
+	}
+
 };
 
 inline std::ostream &operator<<(std::ostream &stream, Color const &c) {
@@ -210,7 +264,6 @@ class ImageBase
 	unsigned char* huffmanDecode(string data, HuffmanTree htree);
 
 	vector<pixel_block> toBlock();
-	vector<pixel_block> dct();
 	static ImageBase* fromBlock(vector<pixel_block> blocks, int width, int height, bool color);
 
 	unsigned char *operator[](int l);
