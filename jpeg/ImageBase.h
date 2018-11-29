@@ -67,7 +67,7 @@ struct Color {
 	}
 
 	inline Color operator+(const Color& other) {
-		return {r+other.r, g+other.g, b=other.b};
+		return {r+other.r, g+other.g, b+other.b};
 	}
 
 	inline bool operator<(const Color& other) {
@@ -92,7 +92,7 @@ struct Color {
     	b = 1.772*(cb-128.0) + y;
 		r = clamp(round(r), 0.0,255.0);
 		g = clamp(round(g), 0.0,255.0);
-		b = clamp(round(b),0.0,255.0);
+		b = clamp(round(b), 0.0,255.0);
 	}
 
 	int luminance() const {
@@ -116,43 +116,102 @@ struct pixel_block {
 	}
 
 	pixel_block dct() {
+		if (color) {
+			return dct_color();
+		} else {
+			return dct_grey();
+		}
+	}
+
+	pixel_block dct_grey() {
 		pixel_block res(color);
 		res.start_index = start_index;
 		double Ci,Cj;
 		for (int i = 0; i < 8; ++i) {
 			for (int j = 0; j < 8; ++j) {
-				auto color = Color();
+				double sum = 0;
 				Ci = i == 0 ? 1./sqrt(2) : 1.;
 				Cj = j == 0 ? 1./sqrt(2) : 1.;
 				for (int x = 0; x < 8; x++) {
 					for (int y = 0; y < 8; y++) {
-						color = color + data[x][y] * cos(((2*x+1) * i * M_PI)/16)
-												   * cos(((2*y+1) * j * M_PI)/16);
+						sum += dataGrey[x][y] * cos(((2*x+1) * i * M_PI)/16)
+											  * cos(((2*y+1) * j * M_PI)/16);
 					}
 				}
-				res.data[i][j] = color * Ci * Cj * 2.0 / 8.0;
+				res.dataGrey[i][j] = sum * Ci * Cj * 2.0 / 8.0;
+			}
+		}
+		return res;
+	}
+
+	pixel_block dct_color() {
+		pixel_block res(color);
+		res.start_index = start_index;
+		double Ci,Cj;
+		for (int i = 0; i < 8; ++i) {
+			for (int j = 0; j < 8; ++j) {
+				auto c = Color();
+				Ci = i == 0 ? 1./sqrt(2) : 1.;
+				Cj = j == 0 ? 1./sqrt(2) : 1.;
+				for (int x = 0; x < 8; x++) {
+					for (int y = 0; y < 8; y++) {
+						c = c + data[x][y] * cos(((2*x+1) * i * M_PI)/16)
+										   * cos(((2*y+1) * j * M_PI)/16);
+					}
+				}
+				res.data[i][j] = c * Ci * Cj * 2.0 / 8.0;
 			}
 		}
 		return res;
 	}
 
 	pixel_block idct() {
+		if (color) {
+			return idct_color();
+		} else {
+			return idct_grey();
+		}
+	}
+
+	pixel_block idct_grey() {
 		pixel_block res(color);
 		res.start_index = start_index;
 		double Ci,Cj;
 		for (int x = 0; x < 8; ++x) {
 			for (int y = 0; y < 8; ++y) {
-				auto color = Color();
+				double sum = 0;
 				for (int i = 0; i < 8; i++) {
 					for (int j = 0; j < 8; j++) {
 						Ci = i == 0 ? 1./sqrt(2) : 1.;
 						Cj = j == 0 ? 1./sqrt(2) : 1.;
-						color = color + data[i][j] * cos(((2*x+1) * i * M_PI)/16)
-												   * cos(((2*y+1) * j * M_PI)/16)
-												   * Ci * Cj;
+						sum += dataGrey[i][j] * cos(((2*x+1) * i * M_PI)/16)
+											  * cos(((2*y+1) * j * M_PI)/16)
+											  * Ci * Cj;
 					}
 				}
-				res.data[x][y] = color * 2.0/8.0;
+				res.dataGrey[x][y] = sum * 2.0 / 8.0;
+			}
+		}
+		return res;
+	}
+
+	pixel_block idct_color() {
+		pixel_block res(color);
+		res.start_index = start_index;
+		double Ci,Cj;
+		for (int x = 0; x < 8; ++x) {
+			for (int y = 0; y < 8; ++y) {
+				auto c = Color();
+				for (int i = 0; i < 8; i++) {
+					for (int j = 0; j < 8; j++) {
+						Ci = i == 0 ? 1./sqrt(2) : 1.;
+						Cj = j == 0 ? 1./sqrt(2) : 1.;
+						c = c + data[i][j] * cos(((2*x+1) * i * M_PI)/16)
+										   * cos(((2*y+1) * j * M_PI)/16)
+										   * Ci * Cj;
+					}
+				}
+				res.data[x][y] = c * 2.0 / 8.0;
 			}
 		}
 		return res;

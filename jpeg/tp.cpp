@@ -23,13 +23,13 @@ int main(int argc, char **argv)
 	for (auto& b : blocks) {
 		b = b.dct().idct();
 	}
-	auto blocksdct = blocks[4].dct();
-	auto blockidct = blocksdct.idct();
-	for (int i = 0; i < 8; i++) {
-		for (int j = 0; j < 8; j++) {
-			cout << blockidct.data[i][j] << "|" << blocks[4].data[i][j] <<endl;
-		}
-	}
+	// auto blocksdct = blocks[4].dct();
+	// auto blockidct = blocksdct.idct();
+	// for (int i = 0; i < 8; i++) {
+	// 	for (int j = 0; j < 8; j++) {
+	// 		cout << blockidct.data[i][j] << blocks[4].data[i][j] << blocksdct.data[i][j] <<endl;
+	// 	}
+	// }
 	auto im = ImageBase::fromBlock(blocks, imIn.getWidth(), imIn.getHeight(), imIn.getColor());
 	auto psnr = imIn.psnr(*im);
 	im->save("test.ppm");
