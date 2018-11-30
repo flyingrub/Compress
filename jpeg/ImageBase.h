@@ -109,6 +109,10 @@ struct Color {
 
 };
 
+inline std::ostream &operator<<(std::ostream &stream, Color const &c) {
+    return stream << c.r << " " << c.g << " " << c.b << endl;
+}
+
 typedef std::array<std::array<int, 8>, 8>  matrix;
 
 struct pixel_block {
@@ -295,9 +299,7 @@ struct pixel_block {
 	}
 };
 
-inline std::ostream &operator<<(std::ostream &stream, Color const &c) {
-    return stream << c.r << " " << c.g << " " << c.b << endl;
-}
+
 
 class ImageBase
 {

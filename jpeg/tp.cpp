@@ -20,8 +20,8 @@ int main(int argc, char **argv)
 	ImageBase imIn, im2;
 	imIn.load("../perroquet.ppm");
 	auto blocks = imIn.toBlock();
-	for (auto& b : blocks) {
-		b = b.quantize(50);
+	for (int i = 0; i<blocks.size(); i++) {
+		blocks[0] = blocks[0].dct().quantize(50).invquantize(50).idct();
 	}
 	auto im = ImageBase::fromBlock(blocks, imIn.getWidth(), imIn.getHeight(), imIn.getColor());
 	auto psnr = imIn.psnr(*im);
