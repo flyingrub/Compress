@@ -107,6 +107,10 @@ struct Color {
 		return sqrt(pow(other.r - r, 2) + pow(other.g - g, 2) + pow(other.b - b, 2));
 	}
 
+	bool isBlack(){
+		return r == 0 && g == 0 && b == 0;
+	}
+
 };
 
 inline std::ostream &operator<<(std::ostream &stream, Color const &c) {
@@ -297,6 +301,44 @@ struct pixel_block {
 		}
 		return res;
 	}
+
+	vector<Color> zigzag() { // MinimumCodeUnit
+		vector<Color> res;
+		int n = 8;
+		for (int slice = 0; slice < 2 * n - 1; ++slice) {
+			int z = (slice < n) ? 0 : slice - n + 1;
+			for (int j = z; j <= slice - z; ++j) {
+				if (color) {
+					res.push_back(data[j][slice - j]);
+				} else {
+					res.push_back({dataGrey[j][slice - j],-1,-1});
+				}
+			}
+		}
+		vector<Color>::const_reverse_iterator last = std::find_if(res.rbegin(), res.rend(), [](const Color& c) {
+			return c.isBlack();
+		});
+		return vector<Color>(res.begin(), last);
+	}
+
+	pixel_block static fromZigZag(vector<Color> mcu, bool color) {
+		int count = 0;
+		int n = 8;
+		pixel_block res(color);
+		for (int slice = 0; slice < 2 * n - 1; ++slice) {
+			int z = (slice < n) ? 0 : slice - n + 1;
+			for (int j = z; j <= slice - z; ++j) {
+				Color c = count < mcu.size() ? mcu[count] : Color(0,0,0);
+				if (color) {
+					res.data[j][slice - j] = c;
+				} else {
+					res.dataGrey[j][slice - j] = mcu[count].r;
+				}
+				count++;
+			}
+		}
+		return res;
+	};
 };
 
 
