@@ -1001,9 +1001,8 @@ vector<pixel_block> ImageBase::toBlock() {
 	vector<pixel_block> res;
 	for (int i = 0; i< block_col; i++) {
 		for (int j = 0; j< block_row; j++) {
-			pixel_block current(color);
 			int currentIndex = i*8 + (j*8*width);
-			current.start_index = currentIndex;
+			pixel_block current(color, currentIndex);
 			for (int k = 0; k<8; k++) {
 				for (int l = 0; l<8; l++) {
 					int index = currentIndex + k+l*width;
@@ -1023,6 +1022,7 @@ vector<pixel_block> ImageBase::toBlock() {
 
 ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int height, bool color) {
 	ImageBase* imageRes = new ImageBase(width, height, color);
+	cout << color << endl;
 	for (int i = 0; i<blocks.size(); i++) {
 		pixel_block currentBlock = blocks[i];
 		for (int k = 0; k<8; k++) {
@@ -1031,6 +1031,9 @@ ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int heigh
 				if (color) {
 					Color currentColor = currentBlock.data[k][l];
 					index *= 3;
+					if (i<7&& k==3 && l ==3) {
+						cout << currentColor << endl;
+					}
 					imageRes->data[index] = currentColor.r;
 					imageRes->data[index+1] = currentColor.g;
 					imageRes->data[index+2] = currentColor.b;

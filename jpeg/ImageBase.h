@@ -135,8 +135,31 @@ struct pixel_block {
 		{72, 92, 95, 98, 112, 100, 103, 99}
 	}};
 
-	pixel_block(bool color) {
+	pixel_block(bool color, int start_index) {
 		this->color = color;
+		this->start_index = start_index;
+	}
+
+	pixel_block toYCbCr() {
+		pixel_block res(color, start_index);
+		for (int x = 0; x < 8; x++) {
+			for (int y = 0; y < 8; y++) {
+				res.data[x][y] = data[x][y];
+				res.data[x][y].toYCbCr();
+			}
+		}
+		return res;
+	}
+
+	pixel_block toRGB() {
+		pixel_block res(color, start_index);
+		for (int x = 0; x < 8; x++) {
+			for (int y = 0; y < 8; y++) {
+				res.data[x][y] = data[x][y];
+				res.data[x][y].toRGB();
+			}
+		}
+		return res;
 	}
 
 	pixel_block dct() {
@@ -148,8 +171,7 @@ struct pixel_block {
 	}
 
 	pixel_block dct_grey() {
-		pixel_block res(color);
-		res.start_index = start_index;
+		pixel_block res(color, start_index);
 		double Ci,Cj;
 		for (int i = 0; i < 8; ++i) {
 			for (int j = 0; j < 8; ++j) {
@@ -169,8 +191,7 @@ struct pixel_block {
 	}
 
 	pixel_block dct_color() {
-		pixel_block res(color);
-		res.start_index = start_index;
+		pixel_block res(color, start_index);
 		double Ci,Cj;
 		for (int i = 0; i < 8; ++i) {
 			for (int j = 0; j < 8; ++j) {
@@ -198,8 +219,7 @@ struct pixel_block {
 	}
 
 	pixel_block idct_grey() {
-		pixel_block res(color);
-		res.start_index = start_index;
+		pixel_block res(color, start_index);
 		double Ci,Cj;
 		for (int x = 0; x < 8; ++x) {
 			for (int y = 0; y < 8; ++y) {
@@ -220,8 +240,7 @@ struct pixel_block {
 	}
 
 	pixel_block idct_color() {
-		pixel_block res(color);
-		res.start_index = start_index;
+		pixel_block res(color, start_index);
 		double Ci,Cj;
 		for (int x = 0; x < 8; ++x) {
 			for (int y = 0; y < 8; ++y) {
@@ -265,7 +284,7 @@ struct pixel_block {
 	}
 
 	pixel_block quantize(int quality_factor) {
-		pixel_block res(color);
+		pixel_block res(color, start_index);
 		matrix qm = create_quantification_matrix(quality_factor);
 		if (color) {
 			for (int i = 0; i<8; i++) {
@@ -284,7 +303,7 @@ struct pixel_block {
 	}
 
 	pixel_block invquantize(int quality_factor) {
-		pixel_block res(color);
+		pixel_block res(color, start_index);
 		matrix qm = create_quantification_matrix(quality_factor);
 		if (color) {
 			for (int i = 0; i<8; i++) {
@@ -315,16 +334,17 @@ struct pixel_block {
 				}
 			}
 		}
-		vector<Color>::const_reverse_iterator last = std::find_if(res.rbegin(), res.rend(), [](const Color& c) {
-			return c.isBlack();
+		vector<Color>::const_reverse_iterator last = std::find_if(res.rbegin(), res.rend(), [](Color& c) {
+			return !c.isBlack();
 		});
-		return vector<Color>(res.begin(), last);
+		res.erase(last.base(), res.end());
+		return res;
 	}
 
-	pixel_block static fromZigZag(vector<Color> mcu, bool color) {
+	pixel_block static fromZigZag(vector<Color> mcu, bool color, int start_index) {
 		int count = 0;
 		int n = 8;
-		pixel_block res(color);
+		pixel_block res(color, start_index);
 		for (int slice = 0; slice < 2 * n - 1; ++slice) {
 			int z = (slice < n) ? 0 : slice - n + 1;
 			for (int j = z; j <= slice - z; ++j) {
