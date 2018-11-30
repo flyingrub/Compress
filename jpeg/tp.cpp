@@ -19,16 +19,11 @@ int main(int argc, char **argv)
 
 	ImageBase imIn, im2;
 	imIn.load("../perroquet.ppm");
-	auto blocks = imIn.toBlock();
-	int quantize_quality = 30;
-	for (int i = 0; i<blocks.size(); i++) {
-		auto zigzag = blocks[i].toYCbCr().dct().quantize(quantize_quality).zigzag();
-		blocks[i] = pixel_block::fromZigZag(zigzag,blocks[i].color,blocks[i].start_index).invquantize(quantize_quality).idct().toRGB();
-	}
-	auto im = ImageBase::fromBlock(blocks, imIn.getWidth(), imIn.getHeight(), imIn.getColor());
-	auto psnr = imIn.psnr(*im);
+	int quantize_quality = 90;
+	auto data = imIn.fullCompress(quantize_quality);
+	auto im = ImageBase::fromBlock(data, imIn.getWidth(), imIn.getHeight(), imIn.getColor(), quantize_quality);	// auto psnr = imIn.psnr(*im);
 	im->save("test.ppm");
-	cout << "psnr:" << psnr << endl;
+	cout << "psnr:" << im->psnr(imIn) << endl;
 
 	return 0;
 }

@@ -996,17 +996,18 @@ unsigned char* ImageBase::huffmanDecode(string data, HuffmanTree htree) {
 
 
 
-tuple<string, HuffmanTree> ImageBase::fullCompress(int quality) {
+vector<pixel_block> ImageBase::fullCompress(int quality) {
 	auto blocks = toBlock();
 	vector<string> strings;
 	vector<vector<Color>> colors;
 	int size = 0;
 	for (int i = 0; i<blocks.size(); i++) {
-		auto zigzag = blocks[i].toYCbCr().dct().quantize(quality).zigzag();
+		blocks[i] =  blocks[i].toYCbCr().dct().quantize(quality);
+		auto zigzag = blocks[i].zigzag();
 		colors.push_back(zigzag);
 		size+=zigzag.size()+1;
 	}
-	double colorData[size*3];
+	int colorData[size*3];
 	int count=0;
 	for (auto vc : colors) {
 		for (auto c : vc) {
@@ -1015,11 +1016,23 @@ tuple<string, HuffmanTree> ImageBase::fullCompress(int quality) {
 			colorData[count++] = c.b;
 		}
 	}
+	string original_data(reinterpret_cast<char*>(this->data), nTaille);
+	string s(reinterpret_cast<char*>(colorData), size*3);
+	vector< pair<char, unsigned> > cfvec = make_freq_table(s);
+	HuffmanTree *htree = build_tree(cfvec);
+	// print_tree(htree);
+	codetable ctbl = build_lookup_table(htree);
+	code_t t = encode(s, ctbl);
+	string data = bitvec_to_string(t);
+	cout << "compression ratio from zigzag : " << (float) s.size() / (float) data.size() << endl;
+	cout << "compression ratio from original : " << (float) original_data.size() / (float) data.size() << endl;
+	return blocks;
 }
 
-void ImageBase::fullDecode() {
-	// blocks[i] = pixel_block::fromZigZag(zigzag,blocks[i].color,blocks[i].start_index).invquantize(quantize_quality).idct().toRGB();
-
+void ImageBase::fullDecode(string data, HuffmanTree htree, int quality) { // TODO
+	code_t t1 = string_to_bitvec(data);
+	string s1 = decode(t1, &htree);
+	const int* res = reinterpret_cast<const int *>(s1.c_str());
 }
 
 
@@ -1048,10 +1061,10 @@ vector<pixel_block> ImageBase::toBlock() {
 	return res;
 }
 
-ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int height, bool color) {
+ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int height, bool color, int quantize_quality) {
 	ImageBase* imageRes = new ImageBase(width, height, color);
 	for (int i = 0; i<blocks.size(); i++) {
-		pixel_block currentBlock = blocks[i];
+		pixel_block currentBlock = blocks[i].invquantize(quantize_quality).idct().toRGB();
 		for (int k = 0; k<8; k++) {
 			for (int l = 0; l<8; l++) {
 				int index = currentBlock.start_index + k+l*width;

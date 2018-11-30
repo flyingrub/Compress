@@ -81,11 +81,11 @@ map<char, code_t> build_lookup_table(HuffmanTree *htree) {
 		} else {
 			// Leaf node: contains the character
 			lookup.insert(make_pair(node->c, code));
-			cout << "(" << (int) (unsigned char) node->c << ", ";
+			// cout << "(" << (int) (unsigned char) node->c << ", ";
 			for (unsigned i = 0; i < code.size(); i++) {
-				cout << code[i];
+				// cout << code[i];
 			}
-			cout << ")" << endl;
+			// cout << ")" << endl;
 		}
 	}
 

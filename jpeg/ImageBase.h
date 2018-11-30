@@ -463,10 +463,10 @@ class ImageBase
 	unsigned char* huffmanDecode(string data, HuffmanTree htree);
 
 	vector<pixel_block> toBlock();
-	static ImageBase* fromBlock(vector<pixel_block> blocks, int width, int height, bool color);
+	static ImageBase* fromBlock(vector<pixel_block> blocks, int width, int height, bool color, int quality);
 
-	tuple<string, HuffmanTree> fullCompress(int quality);
-	void fullDecode();
+	vector<pixel_block> fullCompress(int quality);
+	void fullDecode(string data, HuffmanTree htree, int quality);
 
 	unsigned char *operator[](int l);
 };
