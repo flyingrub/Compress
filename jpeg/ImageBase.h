@@ -74,6 +74,10 @@ struct Color {
 		return luminance() < other.luminance();
 	}
 
+	Color round() {
+		return {std::round(r),std::round(g),std::round(b)};
+	}
+
 	void toYCbCr() {
     	double y = 0.299*r + 0.587*g + 0.114*b ;
     	double cb = 128.0 - (0.168736*r) - (0.331264*g) + (0.5*b);
@@ -90,9 +94,9 @@ struct Color {
 		r = 1.402*(cr-128.0) + y;
     	g = -0.344136*(cb-128.0)-0.714136*(cr-128.0) + y;
     	b = 1.772*(cb-128.0) + y;
-		r = clamp(round(r), 0.0,255.0);
-		g = clamp(round(g), 0.0,255.0);
-		b = clamp(round(b), 0.0,255.0);
+		r = clamp(std::round(r), 0.0,255.0);
+		g = clamp(std::round(g), 0.0,255.0);
+		b = clamp(std::round(b), 0.0,255.0);
 	}
 
 	int luminance() const {
@@ -105,11 +109,23 @@ struct Color {
 
 };
 
+typedef std::array<std::array<int, 8>, 8>  matrix;
+
 struct pixel_block {
 	int start_index;
 	bool color;
 	Color data[8][8];
 	double dataGrey[8][8];
+	matrix quantize_matrix = {{
+		{16, 11, 10, 16, 24, 40, 51, 61},
+		{12, 12, 14, 19, 26, 58, 60, 55},
+		{14, 13, 16, 24, 40, 57, 69, 56},
+		{14, 17, 22, 29, 51, 87, 80, 62},
+		{18, 22, 37, 56, 68, 109, 103, 77},
+		{24, 35, 55, 64, 81, 104, 113, 92},
+		{49, 64, 78, 87, 103, 121, 120, 101},
+		{72, 92, 95, 98, 112, 100, 103, 99}
+	}};
 
 	pixel_block(bool color) {
 		this->color = color;
@@ -217,6 +233,66 @@ struct pixel_block {
 		return res;
 	}
 
+	matrix create_quantification_matrix(int qualityFactor) {
+		matrix res;
+		if (qualityFactor<50) {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res[i][j] = ((quantize_matrix[i][j] * (5000 / qualityFactor) + 50)/100);
+				}
+			}
+		} else {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res[i][j] = ((quantize_matrix[i][j] * (200 - 2 * qualityFactor) + 50)/100);
+				}
+			}
+		}
+		for (int i = 0; i<8; i++) {
+			for (int j = 0; j<8; j++) {
+				res[i][j] = (int) clamp(res[i][j],1,255);
+			}
+		}
+		return res;
+	}
+
+	pixel_block quantize(int quality_factor) {
+		pixel_block res(color);
+		matrix qm = create_quantification_matrix(quality_factor);
+		if (color) {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res.data[i][j] = (data[i][j]/qm[i][j]).round();
+				}
+			}
+		} else {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res.dataGrey[i][j] = round(dataGrey[i][j]/qm[i][j]);
+				}
+			}
+		}
+		return res;
+	}
+
+	pixel_block invquantize(int quality_factor) {
+		pixel_block res(color);
+		matrix qm = create_quantification_matrix(quality_factor);
+		if (color) {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res.data[i][j] = data[i][j]*qm[i][j];
+				}
+			}
+		} else {
+			for (int i = 0; i<8; i++) {
+				for (int j = 0; j<8; j++) {
+					res.dataGrey[i][j] = dataGrey[i][j]*qm[i][j];
+				}
+			}
+		}
+		return res;
+	}
 };
 
 inline std::ostream &operator<<(std::ostream &stream, Color const &c) {

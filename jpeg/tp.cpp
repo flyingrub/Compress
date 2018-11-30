@@ -21,15 +21,8 @@ int main(int argc, char **argv)
 	imIn.load("../perroquet.ppm");
 	auto blocks = imIn.toBlock();
 	for (auto& b : blocks) {
-		b = b.dct().idct();
+		b = b.quantize(50);
 	}
-	// auto blocksdct = blocks[4].dct();
-	// auto blockidct = blocksdct.idct();
-	// for (int i = 0; i < 8; i++) {
-	// 	for (int j = 0; j < 8; j++) {
-	// 		cout << blockidct.data[i][j] << blocks[4].data[i][j] << blocksdct.data[i][j] <<endl;
-	// 	}
-	// }
 	auto im = ImageBase::fromBlock(blocks, imIn.getWidth(), imIn.getHeight(), imIn.getColor());
 	auto psnr = imIn.psnr(*im);
 	im->save("test.ppm");
