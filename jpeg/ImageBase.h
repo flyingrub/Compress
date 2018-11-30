@@ -465,5 +465,8 @@ class ImageBase
 	vector<pixel_block> toBlock();
 	static ImageBase* fromBlock(vector<pixel_block> blocks, int width, int height, bool color);
 
+	tuple<string, HuffmanTree> fullCompress(int quality);
+	void fullDecode();
+
 	unsigned char *operator[](int l);
 };

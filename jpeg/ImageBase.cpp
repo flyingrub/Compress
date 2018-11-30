@@ -995,6 +995,34 @@ unsigned char* ImageBase::huffmanDecode(string data, HuffmanTree htree) {
 }
 
 
+
+tuple<string, HuffmanTree> ImageBase::fullCompress(int quality) {
+	auto blocks = toBlock();
+	vector<string> strings;
+	vector<vector<Color>> colors;
+	int size = 0;
+	for (int i = 0; i<blocks.size(); i++) {
+		auto zigzag = blocks[i].toYCbCr().dct().quantize(quality).zigzag();
+		colors.push_back(zigzag);
+		size+=zigzag.size()+1;
+	}
+	double colorData[size*3];
+	int count=0;
+	for (auto vc : colors) {
+		for (auto c : vc) {
+			colorData[count++] = c.r;
+			colorData[count++] = c.g;
+			colorData[count++] = c.b;
+		}
+	}
+}
+
+void ImageBase::fullDecode() {
+	// blocks[i] = pixel_block::fromZigZag(zigzag,blocks[i].color,blocks[i].start_index).invquantize(quantize_quality).idct().toRGB();
+
+}
+
+
 vector<pixel_block> ImageBase::toBlock() {
 	int block_col = getWidth()/8;
 	int block_row = getHeight()/8;
@@ -1022,7 +1050,6 @@ vector<pixel_block> ImageBase::toBlock() {
 
 ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int height, bool color) {
 	ImageBase* imageRes = new ImageBase(width, height, color);
-	cout << color << endl;
 	for (int i = 0; i<blocks.size(); i++) {
 		pixel_block currentBlock = blocks[i];
 		for (int k = 0; k<8; k++) {
@@ -1031,9 +1058,6 @@ ImageBase* ImageBase::fromBlock(vector<pixel_block> blocks, int width, int heigh
 				if (color) {
 					Color currentColor = currentBlock.data[k][l];
 					index *= 3;
-					if (i<7&& k==3 && l ==3) {
-						cout << currentColor << endl;
-					}
 					imageRes->data[index] = currentColor.r;
 					imageRes->data[index+1] = currentColor.g;
 					imageRes->data[index+2] = currentColor.b;
