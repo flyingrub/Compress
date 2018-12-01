@@ -1,0 +1,30 @@
+compression ratio from zigzag : 4.91585
+compression ratio from original : 81.201
+10 | psnr:29.946
+compression ratio from zigzag : 4.99252
+compression ratio from original : 55.0106
+20 | psnr:33.1904
+compression ratio from zigzag : 5.03169
+compression ratio from original : 43.1916
+30 | psnr:34.9554
+compression ratio from zigzag : 5.02406
+compression ratio from original : 36.6686
+40 | psnr:36.0776
+compression ratio from zigzag : 5.04437
+compression ratio from original : 32.1006
+50 | psnr:36.9699
+compression ratio from zigzag : 5.0709
+compression ratio from original : 28.4465
+60 | psnr:37.7814
+compression ratio from zigzag : 5.09692
+compression ratio from original : 24.1667
+70 | psnr:38.8137
+compression ratio from zigzag : 5.18121
+compression ratio from original : 19.3598
+80 | psnr:40.1871
+compression ratio from zigzag : 5.20457
+compression ratio from original : 12.6389
+90 | psnr:42.5203
+compression ratio from zigzag : 4.63361
+compression ratio from original : 4.57513
+100 | psnr:53.4525
